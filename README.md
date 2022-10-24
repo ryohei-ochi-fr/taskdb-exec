@@ -131,52 +131,27 @@ git push -u origin master
 
 ```powershell
 cd taskdb
-nest new api
+npm i -g @nestjs/cli
+nest new command
 
-cd api
+cd command
 npm init -y
-npm install @nestjs/swagger swagger-ui-express --save
+# npm install @nestjs/swagger swagger-ui-express --save
 npm install typescript ts-node @types/node --save-dev
-npm install prisma --save-dev
-npm install @prisma/client
+# npm install prisma --save-dev
+# npm install @prisma/client
 
 # 日付処理用
 npm install date-fns --save
 
-# 起動確認
-npx prisma
-
-# sqliteを利用する
-npx prisma init --datasource-provider sqlite
-
-# .envにdbファイルを書く
-
-# スキーマを確認する
-# The Prisma schema provides an intuitive way to model data. Add the following models to your schema.prisma file:
-
-# モデルを作成する schema.prismaファイル
-
-# マイグレーション
-npx prisma migrate dev --name init
-
-# マスタなどの仕込み(Seed the database)
-#npx prisma db seed
-
-## PrismaStudio の起動
-npx prisma studio
-
-# prismaサービス生成
-npx nest generate module prisma
-npx nest generate service prisma
 
 
-
+# リソースは作成しなくて良い
 # APIのリソースを作成する
-nest g resource jobs
+#nest g resource exec
 
-## スキーマを変更した場合
-npx prisma generate
-npx prisma migrate dev --name init
+# microservices でリソースを作った後
+#npm i --save @nestjs/microservices
 
 
 # 実行 ホットリロード
