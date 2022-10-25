@@ -18,6 +18,7 @@ const ffprobeStatic = require('ffprobe-static');
 let cmd = '';
 let state = 'COMPLETED';
 let filepath = '';
+let result = '';
 
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule);
@@ -40,13 +41,13 @@ async function bootstrap() {
         beginAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
       });
 
-    await encord(filepath);
+    result = await encord(filepath);
 
     let completed = false;
-    if (state == 'COMPLETED') {
+    if (state === 'COMPLETED') {
       completed = true;
     } else {
-      state == 'ABORT';
+      state = 'ABORT';
     }
 
     res = await superagent
@@ -64,68 +65,71 @@ async function bootstrap() {
   console.log(appService.getHello());
 }
 
-async function encord(filepath: string) {
-  console.log('encord: begin');
+async function encord(filepath: string): Promise<string> {
+  return new Promise((resolve) => {
+    console.log('encord: begin');
 
-  ffprobe(filepath, { path: ffprobeStatic.path })
-    .then(function (info) {
-      cmd = '';
-      const filename = path.basename(filepath.replace('.m2ts', '.ts'), '.ts');
-      console.log('filename:' + filename);
+    ffprobe(filepath, { path: ffprobeStatic.path })
+      .then(function (info) {
+        cmd = '';
+        const filename = path.basename(filepath.replace('.m2ts', '.ts'), '.ts');
+        console.log('filename:' + filename);
 
-      console.log('width:' + info.streams[0].width);
-      console.log('height:' + info.streams[0].height);
-      let resize = '';
-      let qp = '';
+        console.log('width:' + info.streams[0].width);
+        console.log('height:' + info.streams[0].height);
+        let resize = '';
+        let qp = '';
 
-      switch (info.streams[0].width) {
-        case 1440:
-          resize = '-resize 960x720';
-          qp = '-qp 22';
-          break;
-        case 1920:
-          resize = '-resize 1280x720';
-          qp = '-qp 25';
-          break;
-        default:
-          resize =
-            '-resize ' + info.streams[0].width + 'x' + info.streams[0].height;
-          qp = '-qp 25';
-          break;
-      }
-
-      const ffmpeg = 'c:/ffmpeg/bin/ffmpeg.exe';
-      const outputPath = '//192.168.7.176/tank/40_enc/';
-
-      cmd =
-        ffmpeg +
-        ' -y -hwaccel cuda -hwaccel_output_format cuda' +
-        ' -c:v mpeg2_cuvid -deint 2 -drop_second_field 1 ' +
-        resize +
-        ' -i "' +
-        filepath +
-        '" -c:v h264_nvenc -profile:v high -g 150 -b_ref_mode 0 ' +
-        qp +
-        ' -c:a copy "' +
-        outputPath +
-        filename +
-        '.mp4"';
-
-      console.log('cmd: ' + cmd);
-
-      exec(cmd, (err, stdout, stderr) => {
-        if (err) {
-          console.log(`stderr: ${stderr}`);
-          return;
+        switch (info.streams[0].width) {
+          case 1440:
+            resize = '-resize 960x720';
+            qp = '-qp 22';
+            break;
+          case 1920:
+            resize = '-resize 1280x720';
+            qp = '-qp 25';
+            break;
+          default:
+            resize =
+              '-resize ' + info.streams[0].width + 'x' + info.streams[0].height;
+            qp = '-qp 25';
+            break;
         }
-        console.log(`stdout: ${stdout}`);
-        state = 'COMPLETED';
-        console.log('encord: finish');
+
+        const ffmpeg = 'c:/ffmpeg/bin/ffmpeg.exe';
+        const outputPath = '//192.168.7.176/tank/40_enc/';
+
+        cmd =
+          ffmpeg +
+          ' -y -hwaccel cuda -hwaccel_output_format cuda' +
+          ' -c:v mpeg2_cuvid -deint 2 -drop_second_field 1 ' +
+          resize +
+          ' -i "' +
+          filepath +
+          '" -c:v h264_nvenc -profile:v high -g 150 -b_ref_mode 0 ' +
+          qp +
+          ' -c:a copy "' +
+          outputPath +
+          filename +
+          '.mp4"';
+
+        console.log('cmd: ' + cmd);
+        resolve(cmd);
+
+        exec(cmd, (err, stdout, stderr) => {
+          if (err) {
+            console.log(`stderr: ${stderr}`);
+            return;
+          }
+          console.log(`stdout: ${stdout}`);
+          state = 'COMPLETED';
+          console.log('encord: finish');
+        });
+      })
+      .catch(function (err) {
+        console.error(err);
       });
-    })
-    .catch(function (err) {
-      console.error(err);
-    });
+  });
 }
 
 bootstrap();
