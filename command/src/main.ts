@@ -58,7 +58,8 @@ async function bootstrap() {
           }
 
           const ffmpeg = 'c:/ffmpeg/bin/ffmpeg.exe';
-          const outputPath = 'c:/temp/out.mp4';
+          // const outputPath = 'c:/temp/';
+          const outputPath = '//192.168.7.176/tank/40_enc/';
 
           const cmd =
             ffmpeg +
