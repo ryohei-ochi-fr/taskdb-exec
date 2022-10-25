@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { AppService } from './app.service';
 import { exec } from 'child_process';
+import { format } from 'date-fns';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const superagent = require('superagent');
@@ -21,13 +22,24 @@ async function bootstrap() {
   // promise with async/await
   (async () => {
     try {
-      const res = await superagent.get('http://192.168.7.171:3000/jobs/queue');
+      let res;
+      res = await superagent.get('http://192.168.7.171:3000/jobs/queue');
       console.log(res.body.filepath);
 
       const filepath = '//192.168.7.176/' + res.body.filepath;
 
       const filename = path.basename(filepath.replace('.m2ts', '.ts'), '.ts');
       console.log('filename:' + filename);
+      // const format = 'yyyy-MM-dd HH:mm:ss';
+      const beginAt = new Date();
+      console.log(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+
+      res = await superagent
+        .patch('http://192.168.7.171:3000/jobs/' + res.body.id)
+        .send({
+          state: 'RUNNING',
+          beginAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+        });
 
       ffprobe(filepath, { path: ffprobeStatic.path })
         .then(function (info) {
