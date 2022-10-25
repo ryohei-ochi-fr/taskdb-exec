@@ -23,44 +23,46 @@ async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule);
   const appService = app.get(AppService);
 
-  try {
-    let res;
-    res = await superagent.get('http://192.168.7.171:3000/jobs/queue');
-    console.log(res.body.filepath);
+  while (true) {
+    try {
+      let res;
+      res = await superagent.get('http://192.168.7.171:3000/jobs/queue');
+      console.log(res.body.filepath);
 
-    filepath = '//192.168.7.176/' + res.body.filepath;
+      filepath = '//192.168.7.176/' + res.body.filepath;
 
-    console.log('main:' + format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+      console.log('main:' + format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
 
-    state = 'RUNNING';
-    res = await superagent
-      .patch('http://192.168.7.171:3000/jobs/' + res.body.id)
-      .send({
-        state: state,
-        beginAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-      });
+      state = 'RUNNING';
+      res = await superagent
+        .patch('http://192.168.7.171:3000/jobs/' + res.body.id)
+        .send({
+          state: state,
+          beginAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+        });
 
-    await encord(filepath);
+      await encord(filepath);
 
-    let completed = false;
-    if (state === 'COMPLETED') {
-      completed = true;
-    } else {
-      state = 'ABORT';
+      let completed = false;
+      if (state === 'COMPLETED') {
+        completed = true;
+      } else {
+        state = 'ABORT';
+      }
+
+      res = await superagent
+        .patch('http://192.168.7.171:3000/jobs/' + res.body.id)
+        .send({
+          state: state,
+          command: cmd,
+          completed: completed,
+          finishAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+        });
+
+      console.log('main: update.');
+    } catch (err) {
+      console.error(err);
     }
-
-    res = await superagent
-      .patch('http://192.168.7.171:3000/jobs/' + res.body.id)
-      .send({
-        state: state,
-        command: cmd,
-        completed: completed,
-        finishAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
-      });
-
-    console.log('main: update.');
-  } catch (err) {
-    console.error(err);
   }
 
   console.log(appService.getHello());
