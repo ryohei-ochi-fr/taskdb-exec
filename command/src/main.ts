@@ -21,7 +21,7 @@ async function bootstrap() {
   // promise with async/await
   (async () => {
     try {
-      const res = await superagent.get('http://localhost:3000/jobs/queue');
+      const res = await superagent.get('http://192.168.7.171:3000/jobs/queue');
       console.log(res.body.filepath);
 
       const filepath = '//192.168.7.176/' + res.body.filepath;
