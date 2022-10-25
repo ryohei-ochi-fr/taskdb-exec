@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { AppService } from './app.service';
-import { exec } from 'child_process';
+import { execSync, exec } from 'child_process';
 import { format } from 'date-fns';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -58,6 +58,8 @@ async function bootstrap() {
         completed: completed,
         finishAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
       });
+
+    console.log('main: update.');
   } catch (err) {
     console.error(err);
   }
@@ -65,7 +67,7 @@ async function bootstrap() {
   console.log(appService.getHello());
 }
 
-async function encord(filepath: string): Promise<string> {
+function encord(filepath: string): Promise<string> {
   return new Promise((resolve) => {
     console.log('encord: begin');
 
@@ -116,15 +118,25 @@ async function encord(filepath: string): Promise<string> {
         console.log('cmd: ' + cmd);
         resolve(cmd);
 
-        exec(cmd, (err, stdout, stderr) => {
-          if (err) {
-            console.log(`stderr: ${stderr}`);
-            return;
-          }
-          console.log(`stdout: ${stdout}`);
+        let result;
+        try {
+          result = execSync(cmd);
+          console.log(`stdout: ${result}`);
           state = 'COMPLETED';
           console.log('encord: finish');
-        });
+        } catch (ex) {
+          console.log(`stderr: ${ex.stdout}`);
+        }
+
+        // exec(cmd, (err, stdout, stderr) => {
+        //   if (err) {
+        //     console.log(`stderr: ${stderr}`);
+        //     return;
+        //   }
+        //   console.log(`stdout: ${stdout}`);
+        //   state = 'COMPLETED';
+        //   console.log('encord: finish');
+        // });
       })
       .catch(function (err) {
         console.error(err);
