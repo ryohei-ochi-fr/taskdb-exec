@@ -16,6 +16,8 @@ const ffprobe = require('ffprobe');
 const ffprobeStatic = require('ffprobe-static');
 
 let cmd = '';
+let state = 'COMPLETED';
+let filepath = '';
 
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule);
@@ -26,20 +28,34 @@ async function bootstrap() {
     res = await superagent.get('http://192.168.7.171:3000/jobs/queue');
     console.log(res.body.filepath);
 
-    const filepath = '//192.168.7.176/' + res.body.filepath;
+    filepath = '//192.168.7.176/' + res.body.filepath;
 
-    encord(filepath);
+    console.log('main:' + format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
 
-    // const format = 'yyyy-MM-dd HH:mm:ss';
-    // const beginAt = new Date();
-    console.log(format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+    state = 'RUNNING';
+    res = await superagent
+      .patch('http://192.168.7.171:3000/jobs/' + res.body.id)
+      .send({
+        state: state,
+        beginAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+      });
+
+    await encord(filepath);
+
+    let completed = false;
+    if (state == 'COMPLETED') {
+      completed = true;
+    } else {
+      state == 'ABORT';
+    }
 
     res = await superagent
       .patch('http://192.168.7.171:3000/jobs/' + res.body.id)
       .send({
-        state: 'RUNNING',
+        state: state,
         command: cmd,
-        beginAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+        completed: completed,
+        finishAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
       });
   } catch (err) {
     console.error(err);
@@ -103,6 +119,7 @@ async function encord(filepath: string) {
           return;
         }
         console.log(`stdout: ${stdout}`);
+        state = 'COMPLETED';
         console.log('encord: finish');
       });
     })
