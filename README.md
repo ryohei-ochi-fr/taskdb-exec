@@ -165,7 +165,8 @@ npm run start:dev
 # 
 npm install ffprobe --save
 npm install ffprobe-static --save
-npm install node-fetch --save
+#npm install node-fetch --save
+npm install superagent --save
 
 [Nest Commanderを試してみる](https://zenn.dev/kakkoyakakko/articles/300539eac560bc)
 npm install nest-commander --save
