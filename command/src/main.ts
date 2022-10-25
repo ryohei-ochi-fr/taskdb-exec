@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { AppService } from './app.service';
-import { execSync, exec } from 'child_process';
+import { execSync } from 'child_process';
 import { format } from 'date-fns';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -18,7 +18,6 @@ const ffprobeStatic = require('ffprobe-static');
 let cmd = '';
 let state = 'COMPLETED';
 let filepath = '';
-let result = '';
 
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule);
@@ -41,7 +40,7 @@ async function bootstrap() {
         beginAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
       });
 
-    result = await encord(filepath);
+    await encord(filepath);
 
     let completed = false;
     if (state === 'COMPLETED') {
